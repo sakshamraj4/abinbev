@@ -210,12 +210,6 @@ elif selected_dashboard == 'Micro View':
     st.write('#### Irrigation Status')
     st.dataframe(data[['Date', 'Irrigation Done', 'Channels Constructed', 'Sprinker installed']] if 'Sprinker installed' in data.columns else data[['Date', 'Irrigation Done', 'Channels Constructed']])
     
-    st.write('#### Weeding Status')
-    st.dataframe(data[['Date', 'Weeding Done']] if 'Weeding Done' in data.columns else data[['Date', 'Weeding Done']])
-    
-    st.write('#### Fertilization Status')
-    st.dataframe(data[['Date', 'Fertilization Done']] if 'Fertilization Done' in data.columns else data[['Date', 'Fertilization Done']])
-
     st.write('#### Tillage Operations')
     st.dataframe(data[['Date', 'tillage']])
 
