@@ -122,10 +122,10 @@ selected_dashboard = st.sidebar.radio("Select Dashboard", dashboard_options)
 
 # Macro View and Micro View functionalities
 if selected_dashboard in ['Macro View', 'Micro View']:
-    csv_path1 = "/home/az-134/Downloads/data_abinbev.csv"
-    csv_path3 = "/home/az-134/Downloads/activity_avinbev.csv"
-    csv_path2 = "/home/az-134/Downloads/data_abinbev.csv"
-    csv_path4 = "/home/az-134/Downloads/test1.csv"
+    csv_path1 = "https://raw.githubusercontent.com/sakshamraj4/abinbev/main/data.csv"
+    csv_path3 = "https://raw.githubusercontent.com/sakshamraj4/abinbev/main/activity_avinbev.csv"
+    csv_path2 = "https://raw.githubusercontent.com/sakshamraj4/abinbev/main/data.csv"
+    csv_path4 = "https://raw.githubusercontent.com/sakshamraj4/abinbev/main/test1.csv"
 
     if selected_dashboard == 'Macro View':
         data = load_data(csv_path1)
@@ -221,7 +221,7 @@ elif selected_dashboard == 'Micro View':
 # Farm Information Dashboard
 elif selected_dashboard == 'Farm Information':
     st.title("Farm Information Dashboard") 
-    uploaded_file = "/home/az-134/Downloads/test1.csv"
+    uploaded_file = "https://raw.githubusercontent.com/sakshamraj4/abinbev/main/test1.csv"
 
     if uploaded_file is not None:
         data = pd.read_csv(uploaded_file)
@@ -238,7 +238,7 @@ elif selected_dashboard == 'Farm Information':
 # Activity Status Dashboard
 elif selected_dashboard == 'Activity Status':
     st.title("Activity Status Dashboard")
-    uploaded_file_activity = "/home/az-134/Downloads/activity_avinbev.csv"
+    uploaded_file_activity = "https://raw.githubusercontent.com/sakshamraj4/abinbev/main/activity_avinbev.csv"
 
     if uploaded_file_activity is not None:
         # Read the CSV file
