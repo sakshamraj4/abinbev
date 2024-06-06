@@ -276,4 +276,3 @@ elif selected_dashboard == 'Activity Status':
         st.write("Please upload a CSV file for the Activity Status dashboard.")
 
 # Run the app
-
