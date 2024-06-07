@@ -117,7 +117,7 @@ st.title('Dashboard')
 data = None
 
 # Sidebar selection for dashboards
-dashboard_options = ['Macro View', 'Micro View', 'Farm Information', 'Activity Status']
+dashboard_options = ['Activity Status','Farm Information', 'Macro View', 'Micro View']
 selected_dashboard = st.sidebar.radio("Select Dashboard", dashboard_options)
 
 # Macro View and Micro View functionalities
