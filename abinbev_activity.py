@@ -53,8 +53,8 @@ def display_farm_info(data, farm_name):
 
 # Functions for macro and micro view
 def generate_summary(data):
-    data['Plot Area in Bigha'] = data['Plot Area in m2'] * 0.00123
-    total_plot_area_bigha = data.groupby('FarmName')['Plot Area in Bigha'].first().sum()
+    #data['Plot Area in Bigha'] = data['Plot Area in m2'] * 0.00123
+    total_plot_area_bigha = 82.28#data.groupby('FarmName')['Plot Area in Bigha'].first().sum()
     num_farms = 59  # Assuming 59 as a fixed value for the number of farms
     activities_summary = data['Activity'].value_counts()
     total_dap = data['DAP(kg)'].sum()
