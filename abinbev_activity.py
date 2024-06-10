@@ -3,6 +3,7 @@ import pandas as pd
 import plotly.express as px
 import plotly.figure_factory as ff
 import json
+import datetime
 
 # Password check function
 def check_password():
@@ -58,6 +59,8 @@ def growth_tracker_color_mapping(val):
         return 'background-color: red; color: black'
     else:
         return 'background-color: white; color: black'
+        
+
 
 # Functions for farm information dashboard
 def filter_farms(data):
@@ -82,6 +85,15 @@ def display_farm_info(data, farm_name):
 
 # Functions for macro and micro view
 def generate_summary(data):
+    today = datetime.date.today()
+    last_date = today - datetime.timedelta(days=1)  # Assuming "last date" means two days ago
+
+    # Calculate total plot visited on last date
+    total_plot_visited_last_date = data[data['Date'] == last_date]['FarmName'].nunique()
+
+    # Calculate activity details for the last date
+    activity_details_last_date = data[data['Date'] == last_date]['Activity'].value_counts()
+
     total_plot_area_bigha = 82.28  # Fixed value for the number of farms
     num_farms = 59  # Assuming 59 as a fixed value for the number of farms
     activities_summary = data['Activity'].value_counts()
@@ -103,7 +115,9 @@ def generate_summary(data):
         'Total Seed Used (kg)': total_seed_used,
         'Maximum Germination Rate (%)': max_germination_rate,
         'Irrigation Done': num_irrigation_done,
-        'Sprinkler Installed': num_sprinkler_installed
+        'Sprinkler Installed': num_sprinkler_installed,
+        'Total Plot Visited Last Date': total_plot_visited_last_date,
+        'Activity Details Last Date': activity_details_last_date
     }
     summary_df = pd.DataFrame(list(summary_data.items()), columns=['Metric', 'Value'])
     return summary_df, activities_summary, seed_varieties
@@ -146,7 +160,7 @@ if check_password():
     data = None
 
     # Sidebar selection for dashboards
-    dashboard_options = ['Activity Status', 'Growth Tracker', 'Farm Information', 'Macro View', 'Micro View']
+    dashboard_options = ['Activity Status', 'Growth Tracker', 'Operations Tracker', 'Farm Information', 'Macro View', 'Micro View']
     selected_dashboard = st.sidebar.radio("Select Dashboard", dashboard_options)
 
     # Macro View and Micro View functionalities
@@ -342,3 +356,47 @@ if check_password():
             st.write(styled_df_growth.to_html(), unsafe_allow_html=True)
         else:
             st.write("Please upload a CSV file for the Growth Tracker dashboard.")
+
+
+
+    elif selected_dashboard == 'Operations Tracker':
+
+        st.title("Operations Tracker Dashboard")
+
+        uploaded_file_operations = "https://raw.githubusercontent.com/sakshamraj4/abinbev/main/operations.csv"  # Update this with the path to your CSV file
+
+        if uploaded_file_operations is not None:
+            # Read the CSV file
+            df_operations = pd.read_csv(uploaded_file_operations)
+
+            # Replace NaN values with an empty string or any other suitable method
+            df_operations = df_operations.fillna('')
+
+            # Apply any necessary data transformations or calculations
+
+            # Apply the color mapping or any special styling
+            styled_df_operations = df_operations.style.applymap(color_mapping)
+
+            # Apply special styling for specific columns if needed
+            if 'Column_Name' in df_operations.columns:
+                styled_df_operations = styled_df_operations.applymap(custom_color_mapping, subset=['Column_Name'])
+
+            # Define table styles
+            table_styles_operations = [
+                {'selector': 'th', 'props': [('background-color', '#333'), ('color', 'white')]},
+                {'selector': 'td', 'props': [('border', '1px solid #ddd'), ('padding', '8px')]}
+            ]
+
+            # Set table properties
+            styled_df_operations = styled_df_operations.set_table_styles(table_styles_operations).set_properties(
+                **{
+                    'font-size': '15px',
+                    'font-family': 'Arial',
+                    'border': '1px solid #ddd'
+                }
+            )
+
+            # Display the styled dataframe
+            st.write(styled_df_operations.to_html(), unsafe_allow_html=True)
+        else:
+            st.write("Please upload a CSV file for the Operations Tracker dashboard.")
