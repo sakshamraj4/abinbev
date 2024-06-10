@@ -29,7 +29,7 @@ def load_data(file_path):
     data['Date'] = pd.to_datetime(data['Date'], dayfirst=True)
     return data
 
-# Define color mapping
+# Custom color mapping function for Growth Tracker
 def color_mapping(val):
     if pd.isna(val) or val == '':
         return 'background-color: white; color: black'
@@ -46,9 +46,18 @@ def color_mapping(val):
     else:
         return 'background-color: white; color: black'
 
-# Special handling for the "FarmName" column
-def farmname_color_mapping(val):
-    return 'background-color: white; color: black'
+# Custom color mapping function for Growth Tracker dashboard
+def growth_tracker_color_mapping(val):
+    if val == 'current':
+        return 'background-color: yellow; color: black'
+    elif val == 'well and passed':
+        return 'background-color: green; color: black'
+    elif val == '':
+        return 'background-color: white; color: black'
+    elif val == 'not followed':
+        return 'background-color: red; color: black'
+    else:
+        return 'background-color: white; color: black'
 
 # Functions for farm information dashboard
 def filter_farms(data):
@@ -137,7 +146,7 @@ if check_password():
     data = None
 
     # Sidebar selection for dashboards
-    dashboard_options = ['Activity Status','Farm Information', 'Macro View', 'Micro View']
+    dashboard_options = ['Activity Status', 'Growth Tracker', 'Farm Information', 'Macro View', 'Micro View']
     selected_dashboard = st.sidebar.radio("Select Dashboard", dashboard_options)
 
     # Macro View and Micro View functionalities
@@ -196,8 +205,6 @@ if check_password():
             st.bar_chart(tillage_operations)
         else:
             st.write("Please upload a CSV file for the Macro View dashboard.")
-
-                
 
     elif selected_dashboard == 'Micro View':
         st.sidebar.header('Filters')
@@ -295,4 +302,43 @@ if check_password():
         else:
             st.write("Please upload a CSV file for the Activity Status dashboard.")
 
-# Run the app
+    # Growth Tracker Dashboard
+    elif selected_dashboard == 'Growth Tracker':
+        st.title("Growth Tracker Dashboard")
+        uploaded_file_growth = "https://raw.githubusercontent.com/sakshamraj4/abinbev/main/Growth_Tracker.csv"
+
+        if uploaded_file_growth is not None:
+        # Read the CSV file
+            df_growth = pd.read_csv(uploaded_file_growth)
+        
+        # Replace NaN values with an empty string
+            df_growth = df_growth.fillna('')
+        
+        # Apply the growth tracker color mapping
+            styled_df_growth = df_growth.style.applymap(lambda val: growth_tracker_color_mapping(val))
+            
+            for column in df_growth.columns:
+                if column == 'Farm Name':
+                    styled_df_growth.set_properties(**{'color': 'grey'}, subset=pd.IndexSlice[:, column])
+        
+        # Set custom table styles
+            styled_df_growth = styled_df_growth.set_table_styles(
+                [{
+                    'selector': 'th',
+                    'props': [('background-color', '#333'), ('color', 'white')]
+                }, {
+                    'selector': 'td',
+                    'props': [('border', '1px solid #ddd'), ('padding', '8px')]
+                }]
+            ).set_properties(
+                **{
+                    'font-size': '15px',
+                    'font-family': 'Arial',
+                    'border': '1px solid #ddd'
+                }
+            )
+
+        # Display the styled dataframe
+            st.write(styled_df_growth.to_html(), unsafe_allow_html=True)
+        else:
+            st.write("Please upload a CSV file for the Growth Tracker dashboard.")
