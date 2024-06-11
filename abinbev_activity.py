@@ -168,7 +168,7 @@ def generate_gantt_data(data):
 # Streamlit app layout and functionality
 if check_password():
     st.set_page_config(layout="wide")
-    st.title('Dashboard')
+    st.title('Sustainability Dashboard ABInBev')
 
     data = None
 
