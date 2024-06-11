@@ -129,17 +129,12 @@ def generate_summary(data):
 
 
 def generate_fertilizer_usage(data):
-    data['Plot Area in Bigha'] = data['Plot Area in m2'] * 0.00123
-    data['DAP per Bigha'] = data['DAP(kg)'] / data['Plot Area in Bigha']
-    data['MOP per Bigha'] = data['MOP(kg)'] / data['Plot Area in Bigha']
-    fertilizer_usage = data.groupby('FarmName')[['DAP per Bigha', 'MOP per Bigha']].mean().reset_index()
+    fertilizer_usage = data[['Farm Name', 'DAP/MOP Fertilizer Applied quantity', 'UREA1 Fertilizer Applied quantity']]
     return fertilizer_usage
 
-
+# Function to generate seed usage summary
 def generate_seed_usage(data):
-    data['Plot Area in Bigha'] = data['Plot Area in m2'] * 0.00123
-    data['Seed per Bigha'] = data['SEED'] / data['Plot Area in Bigha']
-    seed_usage = data.groupby('FarmName')['Seed per Bigha'].mean().reset_index()
+    seed_usage = data[['Farm Name', 'Seeding Rate']]
     return seed_usage
 
 
@@ -168,7 +163,7 @@ def generate_gantt_data(data):
 # Streamlit app layout and functionality
 if check_password():
     st.set_page_config(layout="wide")
-    st.title('Sustainability Dashboard ABInBev')
+    st.title('Dashboard')
 
     data = None
 
@@ -193,6 +188,8 @@ if check_password():
         if data is not None:
             st.sidebar.header('Filters')
             date_range = st.sidebar.date_input("Select Date Range", [])
+            uploaded_file_operations = "https://raw.githubusercontent.com/sakshamraj4/abinbev/main/operations.csv"
+            data1 = pd.read_csv(uploaded_file_operations)
             varieties = []
             if 'Seed Variety' in data.columns:  # Check if 'Seed Variety' column exists
                 varieties = st.sidebar.multiselect("Select Seed Varieties",
@@ -207,15 +204,21 @@ if check_password():
             summary_df, activities_summary, seed_varieties = generate_summary(data)
             st.dataframe(summary_df)
 
-            st.write('### Fertilizer Usage (KG/Bigha) by Farm')
-            fertilizer_usage = generate_fertilizer_usage(data)
-            fig_fertilizer = px.bar(fertilizer_usage, x='FarmName', y=['DAP per Bigha', 'MOP per Bigha'],
-                                    barmode='group', title='Fertilizer Usage (KG/Bigha) by Farm')
-            st.plotly_chart(fig_fertilizer)
+            st.write('### DAP/MOP Fertilizer Applied Quantity (KG/Bigha) by Farm')
+            fertilizer_usage = generate_fertilizer_usage(data1)
+            fig_dap_mop = px.bar(fertilizer_usage, x='Farm Name', y='DAP/MOP Fertilizer Applied quantity',
+                                 title='DAP/MOP Fertilizer Applied Quantity (KG/Bigha) by Farm')
+            st.plotly_chart(fig_dap_mop)
+
+            st.write('### UREA1 Fertilizer Applied Quantity (KG/Bigha) by Farm')
+            fig_urea1 = px.bar(fertilizer_usage, x='Farm Name', y='UREA1 Fertilizer Applied quantity',
+                               title='UREA1 Fertilizer Applied Quantity (KG/Bigha) by Farm')
+            st.plotly_chart(fig_urea1)
 
             st.write('### Seed Usage (KG/Bigha) by Farm')
-            seed_usage = generate_seed_usage(data)
-            fig_seed_usage = px.bar(seed_usage, x='FarmName', y='Seed per Bigha', title='Seed Usage (KG/Bigha) by Farm')
+            seed_usage = generate_seed_usage(data1)
+            fig_seed_usage = px.bar(seed_usage, x='Farm Name', y='Seeding Rate',
+                                    title='Seed Usage (KG/Bigha) by Farm')
             st.plotly_chart(fig_seed_usage)
 
             st.write('### Germination Percentage(latest) by Farmer')
@@ -237,6 +240,7 @@ if check_password():
             st.bar_chart(tillage_operations)
         else:
             st.write("Please upload a CSV file for the Macro View dashboard.")
+
     elif selected_dashboard == 'Micro View':
         st.sidebar.header('Filters')
         farmer_selected = st.sidebar.selectbox("Select Farmer", options=data['FarmName'].unique())
@@ -364,39 +368,52 @@ if check_password():
         else:
             st.write("Please upload a CSV file for the Growth Tracker dashboard.")
 
+
+
+
     elif selected_dashboard == 'Operations Tracker':
+
         st.title("Operations Tracker Dashboard")
+
         uploaded_file_operations = "https://raw.githubusercontent.com/sakshamraj4/abinbev/main/operations.csv"
+
         if uploaded_file_operations is not None:
+
             # Read the CSV file
+
             df_operations = pd.read_csv(uploaded_file_operations)
+
             # Replace NaN values with an empty string or any other suitable method
+
             df_operations = df_operations.fillna('')
+
+            # Convert specific columns to numeric type
+
+            decimal_columns = ['Seeding Rate', 'DAP/MOP Fertilizer Applied quantity',
+                               'UREA1 Fertilizer Applied quantity']
+
+            df_operations[decimal_columns] = df_operations[decimal_columns].apply(pd.to_numeric, errors='coerce')
+
+            # Round the specified columns to 2 decimal places
+
+            df_operations[decimal_columns] = df_operations[decimal_columns].round(2)
+
             # Apply any necessary data transformations or calculations
+
             # Apply the color mapping or any special styling
+
             styled_df_operations = df_operations.style.applymap(color_mapping)
+
             # Apply special styling for specific columns if needed
+
             if 'Column_Name' in df_operations.columns:
                 styled_df_operations = styled_df_operations.applymap(custom_color_mapping, subset=['Column_Name'])
-            # Define table styles
-            table_styles_operations = [
-                {'selector': 'th', 'props': [('background-color', '#333'), ('color', 'white')]},
-                {'selector': 'td', 'props': [('border', '1px solid #ddd'), ('padding', '8px')]}
-            ]
-            # Set table properties
-            styled_df_operations = styled_df_operations.set_table_styles(table_styles_operations).set_properties(
-                **{
-                    'font-size': '15px',
-                    'font-family': 'Arial',
-                    'border': '1px solid #ddd'
-                }
-            )
+
             # Display the styled dataframe
-            st.write(styled_df_operations.to_html(), unsafe_allow_html=True)
-            st.markdown("""<style>
-                th:first-child {position: sticky; left: 0; background-color: #f1f1f1;}
-                td:first-child {position: sticky; left: 0; background-color: #f1f1f1;}
-                tr:first-child th {position: sticky; top: 0; background-color: #f1f1f1;}
-                </style>""", unsafe_allow_html=True)
+
+            st.write(styled_df_operations)
+
         else:
+
             st.write("Please upload a CSV file for the Operations Tracker dashboard.")
+
