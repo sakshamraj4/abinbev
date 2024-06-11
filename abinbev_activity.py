@@ -372,48 +372,56 @@ if check_password():
 
 
     elif selected_dashboard == 'Operations Tracker':
-
         st.title("Operations Tracker Dashboard")
 
         uploaded_file_operations = "https://raw.githubusercontent.com/sakshamraj4/abinbev/main/operations.csv"
 
         if uploaded_file_operations is not None:
-
-            # Read the CSV file
-
+        # Read the CSV file
             df_operations = pd.read_csv(uploaded_file_operations)
 
-            # Replace NaN values with an empty string or any other suitable method
-
+        # Replace NaN values with an empty string or any other suitable method
             df_operations = df_operations.fillna('')
 
-            # Convert specific columns to numeric type
-
-            decimal_columns = ['Seeding Rate', 'DAP/MOP Fertilizer Applied quantity',
-                               'UREA1 Fertilizer Applied quantity']
-
+        # Convert specific columns to numeric type
+            decimal_columns = ['Seeding Rate', 'DAP/MOP Fertilizer Applied quantity', 'UREA1 Fertilizer Applied quantity']
             df_operations[decimal_columns] = df_operations[decimal_columns].apply(pd.to_numeric, errors='coerce')
 
-            # Round the specified columns to 2 decimal places
-
+        # Round the specified columns to 2 decimal places
             df_operations[decimal_columns] = df_operations[decimal_columns].round(2)
 
-            # Apply any necessary data transformations or calculations
-
-            # Apply the color mapping or any special styling
-
+        # Apply the color mapping or any special styling
             styled_df_operations = df_operations.style.applymap(color_mapping)
 
-            # Apply special styling for specific columns if needed
-
+        # Apply special styling for specific columns if needed
             if 'Column_Name' in df_operations.columns:
                 styled_df_operations = styled_df_operations.applymap(custom_color_mapping, subset=['Column_Name'])
 
-            # Display the styled dataframe
+        # Set custom table styles
+            styled_df_operations = styled_df_operations.set_table_styles(
+                [{
+                    'selector': 'th',
+                    'props': [('background-color', '#333'), ('color', 'white')]
+                }, {
+                    'selector': 'td',
+                    'props': [('border', '1px solid #ddd'), ('padding', '8px')]
+                }]
+            ).set_properties(
+                **{
+                    'font-size': '15px',
+                    'font-family': 'Arial',
+                    'border': '1px solid #ddd'
+                }
+            )
 
-            st.write(styled_df_operations)
+        # Display the styled dataframe
+            st.write(styled_df_operations.to_html(), unsafe_allow_html=True)
+            st.markdown("""<style>
+                th:first-child {position: sticky; left: 0; background-color: #f1f1f1;}
+                td:first-child {position: sticky; left: 0; background-color: #f1f1f1;}
+                tr:first-child th {position: sticky; top: 0; background-color: #f1f1f1;}
+                </style>""", unsafe_allow_html=True)
 
         else:
-
             st.write("Please upload a CSV file for the Operations Tracker dashboard.")
 
