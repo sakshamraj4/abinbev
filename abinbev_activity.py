@@ -108,6 +108,9 @@ def display_farm_info(data, farm_name):
             for item in json_data:
                 st.write(f"{item['name']}: {item['value']}")
 
+            st.write("#### Activity ")
+            st.write(row['activity_record'])
+
 
 # Functions for macro and micro view
 def generate_summary(data):
