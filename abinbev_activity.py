@@ -113,16 +113,35 @@ def display_farm_info(data, farm_name):
 
 
 # Functions for macro and micro view
+import datetime
+import pandas as pd
+
+import pandas as pd
+from datetime import datetime, timedelta
+
+
 def generate_summary(data):
-    today = datetime.date.today()
-    last_date = today - datetime.timedelta(days=1)  # Assuming "last date" means two days ago
-
-    # Calculate total plot visited on last date
-    total_plot_visited_last_date = data[data['Date'] == last_date]['FarmName'].nunique()
-
-    # Calculate activity details for the last date
-    activity_details_last_date = data[data['Date'] == last_date]['Activity'].value_counts()
-
+    # Convert 'Date' column to datetime type
+    data['Date'] = pd.to_datetime(data['Date'], dayfirst=True, errors='coerce')
+    # Calculate today's date
+    today = datetime.now().strftime('%d/%m/%Y')
+    # Filter the DataFrame for today's date
+    today_data = data[data['Date'].dt.strftime('%d/%m/%Y') == today]
+    # Calculate yesterday's date
+    yesterday = datetime.now() - timedelta(days=1)
+    yesterday = yesterday.strftime('%d/%m/%Y')
+    # Filter the DataFrame for yesterday's date
+    yesterday_data = data[data['Date'].dt.strftime('%d/%m/%Y') == yesterday]
+    # Calculate two days ago
+    two_days_ago = datetime.now() - timedelta(days=2)
+    two_days_ago = two_days_ago.strftime('%d/%m/%Y')
+    # Filter the DataFrame for two days ago
+    two_days_ago_data = data[data['Date'].dt.strftime('%d/%m/%Y') == two_days_ago]
+    # Count unique entries in 'FarmName' column for each day
+    total_visited_today = today_data['FarmName'].nunique()
+    total_visited_yesterday = yesterday_data['FarmName'].nunique()
+    total_visited_two_days_ago = two_days_ago_data['FarmName'].nunique()
+    # Other summary calculations
     total_plot_area_bigha = 82.28  # Fixed value for the number of farms
     num_farms = 59  # Assuming 59 as a fixed value for the number of farms
     activities_summary = data['Activity'].value_counts()
@@ -131,11 +150,10 @@ def generate_summary(data):
     seed_varieties = data['Seed Variety'].dropna().unique()
     avg_germination_rate = data['GERMINATION VALUE(%)'].mean(skipna=True)
     max_germination_rate = data['GERMINATION VALUE(%)'].max()
-
     num_irrigation_done = data['Irrigation Done'].notna().sum()
     num_sprinkler_installed = data['Sprinker installed'].notna().sum() if 'Sprinker installed' in data.columns else 0
     total_seed_used = data['SEED'].sum()
-
+    # Create summary data dictionary
     summary_data = {
         'Total Plot Area (Bigha)': total_plot_area_bigha,
         'Number of Farms': num_farms,
@@ -145,12 +163,15 @@ def generate_summary(data):
         'Maximum Germination Rate (%)': max_germination_rate,
         'Irrigation Done': num_irrigation_done,
         'Sprinkler Installed': num_sprinkler_installed,
-        'Total Plot Visited Last Date': total_plot_visited_last_date,
-        'Activity Details Last Date': activity_details_last_date
+        'Total Plot Visited Today': total_visited_today,
+        'Total Plot Visited Yesterday': total_visited_yesterday,
+        'Total Plot Visited Two Days Ago': total_visited_two_days_ago,
+        'Activity Details Last Date': activities_summary
     }
+    # Create summary DataFrame
     summary_df = pd.DataFrame(list(summary_data.items()), columns=['Metric', 'Value'])
+    # Return summary DataFrame along with other calculated values
     return summary_df, activities_summary, seed_varieties
-
 
 def generate_fertilizer_usage(data):
     fertilizer_usage = data[['Farm Name', 'DAP/MOP Fertilizer Applied quantity', 'UREA1 Fertilizer Applied quantity']]
@@ -226,7 +247,7 @@ if check_password():
 
             st.header('Summarized View for Overall Farms')
             summary_df, activities_summary, seed_varieties = generate_summary(data)
-            st.dataframe(summary_df)
+            st.write(summary_df)
 
             st.write('### DAP/MOP Fertilizer Applied Quantity (KG/Bigha) by Farm')
             fertilizer_usage = generate_fertilizer_usage(data1)
