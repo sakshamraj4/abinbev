@@ -79,8 +79,6 @@ def conditional_color_mapping(val, col):
         color = ''
     return f'background-color: {color}'
 
-
-
 # Custom color mapping function for Growth Tracker dashboard
 def growth_tracker_color_mapping(val):
     if val.startswith('current'):
