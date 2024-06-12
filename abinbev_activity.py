@@ -4,6 +4,7 @@ import plotly.express as px
 import plotly.figure_factory as ff
 import json
 import datetime
+import numpy as np
 
 
 # Password check function
@@ -39,7 +40,7 @@ def color_mapping(val):
         return 'background-color: white; color: black'
     elif val == 'Done early':
         return 'background-color: lightblue; color: black'
-    elif val == 'Done on time':
+    elif val == 'Done on time' or val == 'Done':
         return 'background-color: lightgreen; color: black'
     elif val == 'Pending':
         return 'background-color: lightyellow; color: black'
@@ -51,19 +52,27 @@ def color_mapping(val):
         return 'background-color: white; color: black'
 
 def conditional_color_mapping(val, col):
+    if isinstance(val, float) and np.isnan(val):
+        return ''  # No coloring for NaN values
     if col == 'Seeding Rate':
         if 7.5 <= val <= 8.5:
             color = 'lightgreen'
+        elif val == '':
+            color = ''
         else:
             color = 'red'
     elif col == 'DAP/MOP Fertilizer Applied quantity':
         if 9.5 <= val <= 10.5:
             color = 'lightgreen'
+        elif val == '':
+            color = ''
         else:
             color = 'red'
     elif col == 'UREA1 Fertilizer Applied quantity':
         if 6.5 <= val <= 7.5:
             color = 'lightgreen'
+        elif val == '':
+            color = ''
         else:
             color = 'red'
     else:
@@ -74,13 +83,13 @@ def conditional_color_mapping(val, col):
 
 # Custom color mapping function for Growth Tracker dashboard
 def growth_tracker_color_mapping(val):
-    if val == 'current':
+    if val.startswith('current'):
         return 'background-color: yellow; color: black'
-    elif val == 'well and passed':
+    elif val.startswith('well and passed'):
         return 'background-color: green; color: black'
     elif val == '':
         return 'background-color: white; color: black'
-    elif val == 'not followed':
+    elif val.startswith('not followed'):
         return 'background-color: red; color: black'
     else:
         return 'background-color: white; color: black'
