@@ -50,6 +50,27 @@ def color_mapping(val):
     else:
         return 'background-color: white; color: black'
 
+def conditional_color_mapping(val, col):
+    if col == 'Seeding Rate':
+        if 7.5 <= val <= 8.5:
+            color = 'lightgreen'
+        else:
+            color = 'red'
+    elif col == 'DAP/MOP Fertilizer Applied quantity':
+        if 9.5 <= val <= 10.5:
+            color = 'lightgreen'
+        else:
+            color = 'red'
+    elif col == 'UREA1 Fertilizer Applied quantity':
+        if 6.5 <= val <= 7.5:
+            color = 'lightgreen'
+        else:
+            color = 'red'
+    else:
+        color = ''
+    return f'background-color: {color}'
+
+
 
 # Custom color mapping function for Growth Tracker dashboard
 def growth_tracker_color_mapping(val):
@@ -208,17 +229,35 @@ if check_password():
             fertilizer_usage = generate_fertilizer_usage(data1)
             fig_dap_mop = px.bar(fertilizer_usage, x='Farm Name', y='DAP/MOP Fertilizer Applied quantity',
                                  title='DAP/MOP Fertilizer Applied Quantity (KG/Bigha) by Farm')
+            fig_dap_mop.add_shape(
+                type='line',
+                x0=-0.5, x1=len(fertilizer_usage['Farm Name']) - 0.5,
+                y0=10, y1=10,
+                line=dict(color='white', dash='dash')
+            )
             st.plotly_chart(fig_dap_mop)
 
             st.write('### UREA1 Fertilizer Applied Quantity (KG/Bigha) by Farm')
             fig_urea1 = px.bar(fertilizer_usage, x='Farm Name', y='UREA1 Fertilizer Applied quantity',
                                title='UREA1 Fertilizer Applied Quantity (KG/Bigha) by Farm')
+            fig_urea1.add_shape(
+                type='line',
+                x0=-0.5, x1=len(fertilizer_usage['Farm Name']) - 0.5,
+                y0=7, y1=7,
+                line=dict(color='white', dash='dash')
+            )
             st.plotly_chart(fig_urea1)
 
             st.write('### Seed Usage (KG/Bigha) by Farm')
             seed_usage = generate_seed_usage(data1)
             fig_seed_usage = px.bar(seed_usage, x='Farm Name', y='Seeding Rate',
                                     title='Seed Usage (KG/Bigha) by Farm')
+            fig_seed_usage.add_shape(
+                type='line',
+                x0=-0.5, x1=len(seed_usage['Farm Name']) - 0.5,
+                y0=8, y1=8,
+                line=dict(color='white', dash='dash')
+            )
             st.plotly_chart(fig_seed_usage)
 
             st.write('### Germination Percentage(latest) by Farmer')
@@ -382,6 +421,7 @@ if check_password():
 
         # Replace NaN values with an empty string or any other suitable method
             df_operations = df_operations.fillna('')
+            df_operations = df_operations.astype(str)
 
         # Convert specific columns to numeric type
             decimal_columns = ['Seeding Rate', 'DAP/MOP Fertilizer Applied quantity', 'UREA1 Fertilizer Applied quantity']
@@ -390,8 +430,8 @@ if check_password():
         # Round the specified columns to 2 decimal places
             df_operations[decimal_columns] = df_operations[decimal_columns].round(2)
 
-        # Apply the color mapping or any special styling
-            styled_df_operations = df_operations.style.applymap(color_mapping)
+        # Apply the conditional color mapping
+            styled_df_operations = df_operations.style.apply(lambda x: [conditional_color_mapping(v, x.name) for v in x], subset=decimal_columns)
 
         # Apply special styling for specific columns if needed
             if 'Column_Name' in df_operations.columns:
@@ -424,4 +464,3 @@ if check_password():
 
         else:
             st.write("Please upload a CSV file for the Operations Tracker dashboard.")
-
