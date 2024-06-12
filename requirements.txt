@@ -1,7 +1,6 @@
-streamlit==1.15.1
-pandas==1.5.2
-plotly.express==1.2.2
-plotly.figure_factory==0.5.4
 json==4.3.4
 datetime==1.0.1
 numpy==1.23.5
+streamlit==1.18.0
+pandas==1.5.3
+plotly==5.11.0
