@@ -100,31 +100,28 @@ def growth_tracker_color_mapping(val):
 def filter_farms(data):
     return data['farmName'].unique()
 
-def extract_alert_levels(json_data):
-    alert_levels = []
+def extract_levels(json_data, field_name):
+    levels = []
     for item in json_data:
-        alert_level = next((entry['value'] for entry in item if entry['name'] == 'Alert Level'), None)
-        alert_levels.append(alert_level)
-    return alert_levels
-
+        level = next((entry['value'] for entry in item if entry['name'] == field_name), None)
+        levels.append(level)
+    return levels
 
 def display_farm_info(data, farm_name):
     farm_data = data[data['farmName'] == farm_name]
-
     for index, row in farm_data.iterrows():
         col1, col2 = st.columns(2)
-
         with col1:
             st.image(row['Image URL'], caption=f"Image {index + 1}", use_column_width=True)
-
         with col2:
             st.write("Farm Name:", row['farmName'])
             st.write("Other Information:")
-
-            json_data = json.loads(row['json data'])
+            try:
+                json_data = json.loads(row['json data'])
+            except json.JSONDecodeError:
+                json_data = []
             for item in json_data:
                 st.write(f"{item['name']}: {item['value']}")
-
             st.write("#### Activity ")
             st.write(row['activity_record'])
 
@@ -354,7 +351,6 @@ if check_password():
             if 'json data' not in data.columns:
                 st.error("The 'json data' column is not present in the uploaded file.")
             else:
-                # Define a function to safely parse JSON
                 def safe_json_loads(json_str):
                     try:
                         return json.loads(json_str)
@@ -362,23 +358,37 @@ if check_password():
                         return None
 
 
-                # Convert json data string to actual list of dictionaries with error handling
                 data['json_data'] = data['json data'].apply(safe_json_loads)
-                # Filter out rows where json_data could not be parsed
                 data = data.dropna(subset=['json_data'])
-                # Extract alert levels
-                data['Alert Level'] = extract_alert_levels(data['json_data'])
+
+                data['Alert Level'] = extract_levels(data['json_data'], 'Alert Level')
+                data['Severity'] = extract_levels(data['json_data'], 'Severity')
+
                 farms = filter_farms(data)
                 selected_farm = st.selectbox("Select Farm", farms)
+
                 alert_levels = data['Alert Level'].dropna().unique()
-                alert_levels = ['Select All'] + list(alert_levels)  # Add 'Select All' option
+                alert_levels = ['Select All'] + list(alert_levels)
+
+                severity_levels = data['Severity'].dropna().unique()
+                severity_levels = ['Select All'] + list(severity_levels)
+
                 selected_alert_level = st.selectbox("Alert Level", alert_levels)
+                selected_severity = st.selectbox("Severity", severity_levels)
+
                 if selected_farm:
-                    if selected_alert_level == 'Select All':
+                    if selected_alert_level == 'Select All' and selected_severity == 'Select All':
                         filtered_data = data[data['farmName'] == selected_farm]
-                    else:
+                    elif selected_alert_level == 'Select All':
+                        filtered_data = data[
+                            (data['farmName'] == selected_farm) & (data['Severity'] == selected_severity)]
+                    elif selected_severity == 'Select All':
                         filtered_data = data[
                             (data['farmName'] == selected_farm) & (data['Alert Level'] == selected_alert_level)]
+                    else:
+                        filtered_data = data[(data['farmName'] == selected_farm) &
+                                             (data['Alert Level'] == selected_alert_level) &
+                                             (data['Severity'] == selected_severity)]
                     display_farm_info(filtered_data, selected_farm)
 
     # Activity Status Dashboard
