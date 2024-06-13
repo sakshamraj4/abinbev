@@ -4,6 +4,7 @@ import plotly.express as px
 import plotly.figure_factory as ff
 import json
 import datetime
+from datetime import datetime, timedelta
 import numpy as np
 
 
@@ -40,7 +41,9 @@ def color_mapping(val):
         return 'background-color: white; color: black'
     elif val == 'Done early':
         return 'background-color: lightblue; color: black'
-    elif val == 'Done on time' or val == 'Done':
+    elif val == 'Done on time':
+        return 'background-color: lightgreen; color: black'
+    elif val == 'Done':
         return 'background-color: lightgreen; color: black'
     elif val == 'Pending':
         return 'background-color: lightyellow; color: black'
@@ -97,6 +100,13 @@ def growth_tracker_color_mapping(val):
 def filter_farms(data):
     return data['farmName'].unique()
 
+def extract_alert_levels(json_data):
+    alert_levels = []
+    for item in json_data:
+        alert_level = next((entry['value'] for entry in item if entry['name'] == 'Alert Level'), None)
+        alert_levels.append(alert_level)
+    return alert_levels
+
 
 def display_farm_info(data, farm_name):
     farm_data = data[data['farmName'] == farm_name]
@@ -117,15 +127,6 @@ def display_farm_info(data, farm_name):
 
             st.write("#### Activity ")
             st.write(row['activity_record'])
-
-
-# Functions for macro and micro view
-import datetime
-import pandas as pd
-
-import pandas as pd
-from datetime import datetime, timedelta
-
 
 def generate_summary(data):
     # Convert 'Date' column to datetime type
@@ -348,16 +349,37 @@ if check_password():
     elif selected_dashboard == 'Farm Information':
         st.title("Farm Information Dashboard")
         uploaded_file = "https://raw.githubusercontent.com/sakshamraj4/abinbev/main/test1.csv"
-
         if uploaded_file is not None:
             data = pd.read_csv(uploaded_file)
             if 'json data' not in data.columns:
                 st.error("The 'json data' column is not present in the uploaded file.")
             else:
+                # Define a function to safely parse JSON
+                def safe_json_loads(json_str):
+                    try:
+                        return json.loads(json_str)
+                    except json.JSONDecodeError:
+                        return None
+
+
+                # Convert json data string to actual list of dictionaries with error handling
+                data['json_data'] = data['json data'].apply(safe_json_loads)
+                # Filter out rows where json_data could not be parsed
+                data = data.dropna(subset=['json_data'])
+                # Extract alert levels
+                data['Alert Level'] = extract_alert_levels(data['json_data'])
                 farms = filter_farms(data)
                 selected_farm = st.selectbox("Select Farm", farms)
+                alert_levels = data['Alert Level'].dropna().unique()
+                alert_levels = ['Select All'] + list(alert_levels)  # Add 'Select All' option
+                selected_alert_level = st.selectbox("Alert Level", alert_levels)
                 if selected_farm:
-                    display_farm_info(data, selected_farm)
+                    if selected_alert_level == 'Select All':
+                        filtered_data = data[data['farmName'] == selected_farm]
+                    else:
+                        filtered_data = data[
+                            (data['farmName'] == selected_farm) & (data['Alert Level'] == selected_alert_level)]
+                    display_farm_info(filtered_data, selected_farm)
 
     # Activity Status Dashboard
     elif selected_dashboard == 'Activity Status':
@@ -438,36 +460,25 @@ if check_password():
         else:
             st.write("Please upload a CSV file for the Growth Tracker dashboard.")
 
-
-
-
     elif selected_dashboard == 'Operations Tracker':
         st.title("Operations Tracker Dashboard")
-
         uploaded_file_operations = "https://raw.githubusercontent.com/sakshamraj4/abinbev/main/operations.csv"
-
         if uploaded_file_operations is not None:
         # Read the CSV file
             df_operations = pd.read_csv(uploaded_file_operations)
-
         # Replace NaN values with an empty string or any other suitable method
             df_operations = df_operations.fillna('')
             df_operations = df_operations.astype(str)
-
         # Convert specific columns to numeric type
             decimal_columns = ['Seeding Rate', 'DAP/MOP Fertilizer Applied quantity', 'UREA1 Fertilizer Applied quantity']
             df_operations[decimal_columns] = df_operations[decimal_columns].apply(pd.to_numeric, errors='coerce')
-
         # Round the specified columns to 2 decimal places
             df_operations[decimal_columns] = df_operations[decimal_columns].round(2)
-
         # Apply the conditional color mapping
             styled_df_operations = df_operations.style.apply(lambda x: [conditional_color_mapping(v, x.name) for v in x], subset=decimal_columns)
-
         # Apply special styling for specific columns if needed
             if 'Column_Name' in df_operations.columns:
                 styled_df_operations = styled_df_operations.applymap(custom_color_mapping, subset=['Column_Name'])
-
         # Set custom table styles
             styled_df_operations = styled_df_operations.set_table_styles(
                 [{
@@ -484,7 +495,6 @@ if check_password():
                     'border': '1px solid #ddd'
                 }
             )
-
         # Display the styled dataframe
             st.write(styled_df_operations.to_html(), unsafe_allow_html=True)
             st.markdown("""<style>
@@ -492,6 +502,5 @@ if check_password():
                 td:first-child {position: sticky; left: 0; background-color: #f1f1f1;}
                 tr:first-child th {position: sticky; top: 0; background-color: #f1f1f1;}
                 </style>""", unsafe_allow_html=True)
-
         else:
             st.write("Please upload a CSV file for the Operations Tracker dashboard.")
