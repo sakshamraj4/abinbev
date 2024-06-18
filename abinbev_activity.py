@@ -33,7 +33,19 @@ def load_data(file_path):
     data = pd.read_csv(file_path)
     data['Date'] = pd.to_datetime(data['Date'], dayfirst=True)
     return data
-
+    
+def safe_json_loads(json_str):
+    try:
+        return json.loads(json_str)
+    except json.JSONDecodeError:
+        return None
+        
+def extract_levels(json_data, level_name):
+    if json_data:
+        for item in json_data:
+            if item['name'] == level_name:
+                return item['value']
+    return None
 
 # Custom color mapping function for Growth Tracker
 def color_mapping(val):
@@ -101,11 +113,11 @@ def filter_farms(data):
     return data['farmName'].unique()
 
 def extract_levels(json_data, field_name):
-    levels = []
-    for item in json_data:
-        level = next((entry['value'] for entry in item if entry['name'] == field_name), None)
-        levels.append(level)
-    return levels
+    if isinstance(json_data, list):
+        for item in json_data:
+            if isinstance(item, dict) and item.get('name') == field_name:
+                return item.get('value')
+    return None
 
 def display_farm_info(data, farm_name):
     farm_data = data[data['farmName'] == farm_name]
@@ -360,49 +372,40 @@ if check_password():
     elif selected_dashboard == 'Farm Information':
         st.title("Farm Information Dashboard")
         uploaded_file = "https://raw.githubusercontent.com/sakshamraj4/abinbev/main/test1.csv"
+    
         if uploaded_file is not None:
             data = pd.read_csv(uploaded_file)
+        
             if 'json data' not in data.columns:
                 st.error("The 'json data' column is not present in the uploaded file.")
             else:
-                def safe_json_loads(json_str):
-                    try:
-                        return json.loads(json_str)
-                    except json.JSONDecodeError:
-                        return None
-
-
                 data['json_data'] = data['json data'].apply(safe_json_loads)
                 data = data.dropna(subset=['json_data'])
 
-                data['Alert Level'] = extract_levels(data['json_data'], 'Alert Level')
-                data['Severity'] = extract_levels(data['json_data'], 'Severity')
+                data['Alert Level'] = data['json_data'].apply(lambda x: extract_levels(x, 'Alert Level'))
+                data['Severity'] = data['json_data'].apply(lambda x: extract_levels(x, 'Severity'))
 
                 farms = filter_farms(data)
-                selected_farm = st.selectbox("Select Farm", farms)
+                selected_farm = st.sidebar.selectbox("Select Farm", farms)
 
-                alert_levels = data['Alert Level'].dropna().unique()
-                alert_levels = ['Select All'] + list(alert_levels)
+                alert_levels = ['Select All'] + list(data['Alert Level'].dropna().unique())
+                selected_alert_level = st.sidebar.selectbox("Alert Level", alert_levels)
 
-                severity_levels = data['Severity'].dropna().unique()
-                severity_levels = ['Select All'] + list(severity_levels)
-
-                selected_alert_level = st.selectbox("Alert Level", alert_levels)
-                selected_severity = st.selectbox("Severity", severity_levels)
+                severity_levels = ['Select All'] + list(data['Severity'].dropna().unique())
+                selected_severity = st.sidebar.selectbox("Severity", severity_levels)
 
                 if selected_farm:
                     if selected_alert_level == 'Select All' and selected_severity == 'Select All':
                         filtered_data = data[data['farmName'] == selected_farm]
                     elif selected_alert_level == 'Select All':
-                        filtered_data = data[
-                            (data['farmName'] == selected_farm) & (data['Severity'] == selected_severity)]
+                        filtered_data = data[(data['farmName'] == selected_farm) & (data['Severity'] == selected_severity)]
                     elif selected_severity == 'Select All':
-                        filtered_data = data[
-                            (data['farmName'] == selected_farm) & (data['Alert Level'] == selected_alert_level)]
+                        filtered_data = data[(data['farmName'] == selected_farm) & (data['Alert Level'] == selected_alert_level)]
                     else:
                         filtered_data = data[(data['farmName'] == selected_farm) &
-                                             (data['Alert Level'] == selected_alert_level) &
-                                             (data['Severity'] == selected_severity)]
+                                         (data['Alert Level'] == selected_alert_level) &
+                                         (data['Severity'] == selected_severity)]
+                
                     display_farm_info(filtered_data, selected_farm)
 
     # Activity Status Dashboard
