@@ -124,6 +124,8 @@ def display_farm_info(data, farm_name):
                 st.write(f"{item['name']}: {item['value']}")
             st.write("#### Activity ")
             st.write(row['activity_record'])
+            st.write('##### Activity Date')
+            st.write(row['Date'])
 
 def generate_summary(data):
     # Convert 'Date' column to datetime type
